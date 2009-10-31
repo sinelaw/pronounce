@@ -15,10 +15,7 @@ import qualified System
 
 import qualified Data.Char
 import qualified Data.Binary as Binary
-import qualified Data.PerfectHash as PH
-
--- instance Binary.Binary PerfectHash a where
---    put ph = 
+import qualified Data.Map as Map
 
 main :: IO ()
 main = do
@@ -27,27 +24,23 @@ main = do
   result <- (LP.parseFromFile convLines filename) 
   case result of
     Left err       -> putStr $ "Parse Error: " ++ show err ++ "\n"
-    Right pron_map -> do
-                let res = PH.lookup pron_map $ packFromString (args!!1) --Binary.encodeFile "test.bin" pron_map
-                case res of 
-                  Nothing    -> return ()
-                  Just pron  -> putStr pron
+    Right pron_map -> Binary.encodeFile ((args!!0) ++ ".bin") pron_map
   return ()
 
 
-type HashS = PH.PerfectHash String
+type MapSS = Map.Map String String
 
 -- todo why doesn't this keep running? just does one line...
-convLines :: LP.Parser HashS
+convLines :: LP.Parser MapSS
 convLines = do converted <- P.many $ (P.try $ parseComment) P.<|> parseEntry
-               return $ PH.fromList . concat $ converted
+               return $ Map.fromList . concat $ converted
                  
          
 
 unpackToString = LBC.unpack
 packFromString = LBC.pack
 
-parseComment :: LP.Parser [(B.ByteString, String)]
+parseComment :: LP.Parser [(String, String)]
 parseComment = do P.spaces
                   P.string ";;;"
                   P.many (P.noneOf "\n")
@@ -56,14 +49,14 @@ parseComment = do P.spaces
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-parseEntry ::  LP.Parser [(B.ByteString, String)]
+parseEntry ::  LP.Parser [(String, String)]
 parseEntry = do P.spaces
                 named_char <- P.optionMaybe . P.many1 . P.oneOf $ "-,:;!?/.'\"()&#%{}"
                 word <- P.many1  $ P.noneOf " "
                 P.spaces
                 pronunciation <- P.many $ P.noneOf "\n"
                 P.newline
-                return $ [(packFromString word, pronunciation)]
+                return $ [(word, pronunciation)]
                 
 
 
