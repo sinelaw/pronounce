@@ -5,8 +5,7 @@
 module Main where
 
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString.Char8 as LBC 
+import qualified Data.ByteString.Char8 as BC 
 
 import qualified Text.Parsec.ByteString.Lazy as LP
 import qualified Text.Parsec as P
@@ -28,7 +27,7 @@ main = do
   return ()
 
 
-type MapSS = Map.Map String String
+type MapSS = Map.Map B.ByteString B.ByteString
 
 -- todo why doesn't this keep running? just does one line...
 convLines :: LP.Parser MapSS
@@ -37,10 +36,10 @@ convLines = do converted <- P.many $ (P.try $ parseComment) P.<|> parseEntry
                  
          
 
-unpackToString = LBC.unpack
-packFromString = LBC.pack
+unpackToString = BC.unpack
+packFromString = BC.pack
 
-parseComment :: LP.Parser [(String, String)]
+parseComment :: LP.Parser [(B.ByteString, B.ByteString)]
 parseComment = do P.spaces
                   P.string ";;;"
                   P.many (P.noneOf "\n")
@@ -49,14 +48,14 @@ parseComment = do P.spaces
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-parseEntry ::  LP.Parser [(String, String)]
+parseEntry ::  LP.Parser [(B.ByteString, B.ByteString)]
 parseEntry = do P.spaces
                 named_char <- P.optionMaybe . P.many1 . P.oneOf $ "-,:;!?/.'\"()&#%{}"
                 word <- P.many1  $ P.noneOf " "
                 P.spaces
                 pronunciation <- P.many $ P.noneOf "\n"
                 P.newline
-                return $ [(word, pronunciation)]
+                return $ [(packFromString word, packFromString pronunciation)]
                 
 
 
